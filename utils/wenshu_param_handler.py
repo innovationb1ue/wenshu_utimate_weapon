@@ -2,7 +2,6 @@ import math
 import random
 import execjs
 
-
 class WenshuParamsHandler:
     def __init__(self, crackjspath='./ruishuCrackerJS.js'):
         with open(crackjspath, 'r', encoding='utf-8') as f:
@@ -13,7 +12,7 @@ class WenshuParamsHandler:
             raise ValueError('Invalid 80T')
 
     def get_cookies(self):
-        CookieStr =  'HM4hUBT0dDOnenable=true; HM4hUBT0dDOn80S=MzJ5SsyX49Oe0QRbz4ZgTGqWGiGqNZQCzXj.uGGel9Fp3t7vqaFgMBWe.nbDH3oV; HM4hUBT0dDOn80T=H80T'
+        CookieStr =  'HM4hUBT0dDOnenable=true; HM4hUBT0dDOn80S=HmncvkTXMmCe.WrF0RBm1y9eogzJie7PYfR2ByQABbm.m8yW3JD0C1.ju0xnIaNf; HM4hUBT0dDOn80T=H80T'
         new_H80T = self.js.call('calljs', '80T')
         return CookieStr.replace('H80T', new_H80T)
 
@@ -23,6 +22,8 @@ class WenshuParamsHandler:
 
     def get_url_postfix(self):
         return self.js.call('calljs', 'J')
+
+
 
 
 if __name__ == '__main__':

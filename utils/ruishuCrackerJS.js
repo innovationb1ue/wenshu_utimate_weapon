@@ -1009,7 +1009,7 @@ function calljs(name='80T'){
     };
     localStorage = window.localStorage = {};
     window.localStorage.removeItem = function(a=''){console.log('localStorage.removeItem', a);this[a] = undefined;};
-    window.localStorage.setItem = function(name='', value=''){window.localStorage[name] = value;}
+    window.localStorage.setItem = function(name='', value=''){window.localStorage[name] = value;};
     window.sessionStorage = sessionStorage;
     window.webkitRequestFileSystem = function(){[nativecode]};
     window.clearInterval = function(){};
@@ -4500,7 +4500,7 @@ function calljs(name='80T'){
                             }
                         } else {
                             if (_$Oh < 61) {
-                                _$ZO.push(_$28[_$oQ[12]], _$28.x, _$28.y);
+                                _$ZO.push(0/*_$28[_$oQ[12]]*/, 284, 276); // mousedown coordinate
                             } else if (_$Oh < 62) {
                                 _$IM(_$C$, _$oQ[53], _$ke);
                             } else if (_$Oh < 63) {
@@ -7040,12 +7040,19 @@ function calljs(name='80T'){
     _$ek(); // 把r == "m" 的script 移除
     var _$xb, _$AI;
     var _$gs, _$wF;
-    _$DG(); // mousemove
-    _$5K(); // click once
-    // 随机模拟多点击几次
-    while (Math.random() > 0.2){
-        _$5K();
-    }
+    _$DG();
+    _$hh();
+    _$hh();
+    _$Ym();
+    _$5K();
+    // while (Math.random() > 0.2){
+    //     _$5K();
+    //     _$Uo();
+    // }
+    // while (Math.random() > 0.2){
+    //     _$5K();
+    //     _$Uo();
+    // }
     return _$02(name);
 }
 // } // end of calljs function.

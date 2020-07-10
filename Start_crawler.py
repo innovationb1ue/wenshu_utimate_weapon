@@ -3,43 +3,84 @@ import json
 from utils.wenshu_decoder import decode_json
 from utils.wenshu_param_handler import WenshuParamsHandler
 from utils.wenshu_requests import WenshuRequest
+from utils.token import RequestVerificationToken
+from utils.cipher import CipherText
+
+import datetime
 
 
 class WenshuCrawler:
     def __init__(self):
         self.h = WenshuParamsHandler('./utils/ruishuCrackerJS.js')
         self.s = WenshuRequest()
-        self.decode = decode_json
 
     def start_Crawl(self):
-        data = {'pageId': WenshuParamsHandler.get_pageid(),
-                's39': 'K20',
-                'sortFields': 's50:desc',
-                'ciphertext': '1110010 1001000 1010111 1000110 1001101 1000110 1000111 1110100 1101010 1110011 1101000 1100110 1001010 1110001 1101010 1110010 1000100 1010101 1010111 1011010 1010110 1110010 110000 1111010 110010 110000 110010 110000 110000 110110 110010 110111 1011010 1100001 1010011 101111 1110100 1011000 1110100 1110001 1001011 110111 110011 1010110 1010111 110000 1010110 1110100 1110000 110100 1110000 1100001 110101 1000001 111101 111101',
-                'pageNum': 1,
-                'pageSize': 999,
-                'cfg': 'com.lawyee.judge.dc.parse.dto.SearchDataDsoDTO@queryDoc',
-                '__RequestVerificationToken': 'HJCFPWsuhmyKjOdPICxsjCoK',
-                'queryCondition': json.dumps(
-                    [{"key": "s39", "value": "K20"}, {"key": "cprq", "value": "2020-06-01 TO 2020-06-02"}])
-                }
-        if resp := self.s.post(data, timeout=20):
-            resjson = resp.json()
-            text = self.decode(resjson)
-            print(text)
-            print(len(json.loads(text)['relWenshu']))
+        timestr = '2020-03-22'
+        with open('./court_infos/level2_courts.json', 'r', encoding='utf-8') as f:
+            courts_bundles_provincial = json.load(f)
+        for court_bundle in courts_bundles_provincial[:1]:
+            boss_court_id = court_bundle[0]['id']
+            for court in court_bundle:
+                for timestr in self._generate_date():
+                    if court['parentid'] == "0":
+                        print(court['name'], self.search_on_court(timestr, '2020-06-22', court['code'], 's38'))
+                    elif court['parentid'] == boss_court_id:
+                        print(court['name'],self.search_on_court(timestr, '2020-06-22', court['code'], 's39'))
+                    else:
+                        print(court['name'],self.search_on_court(timestr, '2020-06-22', court['code'], 's40'))
 
+    def search_on_court(self, startdate:str, enddate:str, courtcode:str, keycode:str) -> str:
+        data = {'pageId': WenshuParamsHandler.get_pageid(),
+                keycode: '{}'.format(courtcode),
+                'sortFields': 's50:desc',
+                'ciphertext': CipherText(),
+                'pageNum': 1,
+                'pageSize': 10,
+                'cfg': 'com.lawyee.judge.dc.parse.dto.SearchDataDsoDTO@queryDoc',
+                '__RequestVerificationToken': RequestVerificationToken(24),
+                'queryCondition': json.dumps(
+                    [{"key": keycode, "value": '{}'.format(courtcode)},
+                     {"key": "cprq", "value": "STARTDATE TO ENDDATE"
+                         .replace('STARTDATE', startdate)
+                      .replace('ENDDATE', enddate)}
+                     ]
+                    )  # 2019-01-01
+                }
+        if resp := self.s.post(data, timeout=10):
+            try:
+                resjson = resp.json()
+                text = decode_json(resjson)
+                return text.strip()
+            except:
+                print(resp.content.decode('utf-8'))
+        else:
+            return ''
+
+    def _generate_date(self):
+        datearray = []
+        day_max = [31,28,31,30,31,30,31,31, 30,31,30,31]
+        for year in range(2000, 2021):
+            for month in range(1, 13):
+                for day in range(1, day_max[month-1]):
+                    try:
+                        timestamp = datetime.datetime(year, month, day).isoformat().split('T')[0]
+                        datearray.append(timestamp)
+                    except :
+                        print(year, month, day)
+        return timestamp
     def get_doc(self):
         data = {
             'docId': '8bf6c34e38de4702af90abde00361a1c',
-            'ciphertext': '1110010 1001000 1010111 1000110 1001101 1000110 1000111 1110100 1101010 1110011 1101000 1100110 1001010 1110001 1101010 1110010 1000100 1010101 1010111 1011010 1010110 1110010 110000 1111010 110010 110000 110010 110000 110000 110110 110010 110111 1011010 1100001 1010011 101111 1110100 1011000 1110100 1110001 1001011 110111 110011 1010110 1010111 110000 1010110 1110100 1110000 110100 1110000 1100001 110101 1000001 111101 111101',
+            'ciphertext': CipherText(),
             'cfg': 'com.lawyee.judge.dc.parse.dto.SearchDataDsoDTO@docInfoSearch',
-            '__RequestVerificationToken': 'r0EyAV2G9MI7XuDKkvqE0Ma8'
+            '__RequestVerificationToken': RequestVerificationToken(24)
         }
         if resp := self.s.post(data, timeout=5):
             resjson = resp.json()
-            text = self.decode(resjson)
+            text = decode_json(resjson)
             print(json.loads(text))
+        else:
+            print(resp.content.decode('utf-8'))
 
 
 if __name__ == '__main__':

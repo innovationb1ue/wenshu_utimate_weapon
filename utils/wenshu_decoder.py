@@ -3,7 +3,7 @@ from datetime import datetime
 from utils.decode_components import des3decrypt
 
 
-def decode_json(json_data):
+def decode_json(json_data:dict) -> str:
     if not json_data:
         return ''
     plain_text = des3decrypt(cipher_text=json_data["result"],

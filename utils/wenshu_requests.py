@@ -4,16 +4,14 @@ from utils.wenshu_param_handler import WenshuParamsHandler
 
 from utils.wenshu_decoder import decode_json
 
-
 class WenshuRequest:
     def __init__(self):
         self.s = requests.Session()
         self.headers = {
             'Accept': 'application/json, text/javascript, */*; q=0.01',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
-            'Host': 'wenshuapp.court.gov.cn',
+            'Host': 'wenshu.court.gov.cn',
             'Origin': 'http://wenshu.court.gov.cn',
-            'Referer': 'http://wenshu.court.gov.cn/website/wenshu/181217BMTKHNT2W0/index.html?pageId=515e9cb57d11190521ad5cdd6d5bc998',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'X-Requested-With': 'XMLHttpRequest',
             'Accept-Encoding': 'gzip, deflate',
@@ -24,7 +22,7 @@ class WenshuRequest:
         except:
             self.handler = WenshuParamsHandler('./utils/ruishuCrackerJS.js')
 
-    def post(self, data, retry=0, timeout=5):
+    def post(self, data: dict, retry=0, timeout=5):
         try:
             if retry == 5:
                 print('Over maximum retry count !')
@@ -34,8 +32,8 @@ class WenshuRequest:
             headers['Cookie'] = self.handler.get_cookies()
             resp = self.s.post(url, data=data, headers=self.headers, timeout=timeout)
         except Exception as e:
-            print(str(e), 'retring count: 1')
-            return self.post(data, retry=1)
+            print(str(e), 'retring count: ', retry)
+            return self.post(data, retry=retry+1, timeout=timeout)
         return resp
 
     def test(self):
@@ -47,9 +45,12 @@ class WenshuRequest:
                 'cfg': 'com.lawyee.judge.dc.parse.dto.SearchDataDsoDTO@queryDoc',
                 '__RequestVerificationToken': 'HJCFPWsuhmyKjOdPICxsjCoK'
                 }
-        resp = self.post(data)
-        print(res := resp.json())
-        print(decode_json(res))
+        try:
+            resp = self.post(data)
+            print(res := resp.json())
+            print(decode_json(res))
+        except:
+            print(resp.content.decode('utf-8'))
 
 
 if __name__ == '__main__':
