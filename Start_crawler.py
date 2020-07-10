@@ -6,8 +6,6 @@ from utils.wenshu_requests import WenshuRequest
 from utils.token import RequestVerificationToken
 from utils.cipher import CipherText
 
-import datetime
-
 
 class WenshuCrawler:
     def __init__(self):
@@ -21,21 +19,20 @@ class WenshuCrawler:
         for court_bundle in courts_bundles_provincial[:1]:
             boss_court_id = court_bundle[0]['id']
             for court in court_bundle:
-                for timestr in self._generate_date():
-                    if court['parentid'] == "0":
-                        print(court['name'], self.search_on_court(timestr, '2020-06-22', court['code'], 's38'))
-                    elif court['parentid'] == boss_court_id:
-                        print(court['name'],self.search_on_court(timestr, '2020-06-22', court['code'], 's39'))
-                    else:
-                        print(court['name'],self.search_on_court(timestr, '2020-06-22', court['code'], 's40'))
+                if court['parentid'] == "0":
+                    print(court['name'], self.search_on_court(timestr, '2020-06-22', court['code'], 's38'))
+                elif court['parentid'] == boss_court_id:
+                    print(court['name'],self.search_on_court(timestr, '2020-06-22', court['code'], 's39'))
+                else:
+                    print(court['name'],self.search_on_court(timestr, '2020-06-22', court['code'], 's40'))
 
-    def search_on_court(self, startdate:str, enddate:str, courtcode:str, keycode:str) -> str:
+    def search_on_court(self, startdate:str, enddate, courtcode:str, keycode:str) -> str:
         data = {'pageId': WenshuParamsHandler.get_pageid(),
                 keycode: '{}'.format(courtcode),
                 'sortFields': 's50:desc',
                 'ciphertext': CipherText(),
                 'pageNum': 1,
-                'pageSize': 10,
+                'pageSize': 5,
                 'cfg': 'com.lawyee.judge.dc.parse.dto.SearchDataDsoDTO@queryDoc',
                 '__RequestVerificationToken': RequestVerificationToken(24),
                 'queryCondition': json.dumps(
@@ -56,18 +53,6 @@ class WenshuCrawler:
         else:
             return ''
 
-    def _generate_date(self):
-        datearray = []
-        day_max = [31,28,31,30,31,30,31,31, 30,31,30,31]
-        for year in range(2000, 2021):
-            for month in range(1, 13):
-                for day in range(1, day_max[month-1]):
-                    try:
-                        timestamp = datetime.datetime(year, month, day).isoformat().split('T')[0]
-                        datearray.append(timestamp)
-                    except :
-                        print(year, month, day)
-        return timestamp
     def get_doc(self):
         data = {
             'docId': '8bf6c34e38de4702af90abde00361a1c',
