@@ -1,34 +1,17 @@
-import requests
-from utils.cipher import CipherText
-import json
 import base64
+import json
+import time
+
+import requests
+
+from APP_crawler.date_handler import date_handler2
 from APP_crawler.wenshu_decoder_app import decode_json
-json_format = \
-    {
-    "id":"20200312141952",
-    "command":"queryDoc",
-    "params":{
-        "pageNum":"1",
-        "sortFields":"s50:desc",
-        "ciphertext":"1011010 110100 1101101 1010111 110000 1000010 1100010 110101 1110011 1010110 1010001 1111010 1001100 110010 1101010 1101000 110011 1110000 1100101 111000 1100001 1101110 1110000 1101101 110010 110000 110010 110000 110000 110111 110001 110101 1000011 1010111 1101001 1001010 1010010 110000 1101111 1000101 101011 1110010 1110010 1100111 1110010 1100110 1101001 110010 1110011 1101011 1110011 1010111 1011000 1010001 111101 111101",
-        "devid":"23a9c9828da443abbcfa8ab452201fab",
-        "devtype":"1",
-        "pageSize":"1000",
-        "queryCondition":[
-            {
-                "key":"s2",
-                "value":"北京市高级人民法院" # 法院名称
-            },
-            {
-                "key":"cprq",
-                "value":"2020-07-01 TO 2020-07-03"
-            }
-        ]
-    }
-}
+from utils.cipher import CipherText
+
 
 class WenShuAppCrawler:
     def __init__(self):
+        self.json_format = self.load_json_format()
         self.s = requests.Session()
 
     def main(self):
@@ -36,16 +19,37 @@ class WenShuAppCrawler:
             courts_bundles_provincial = json.load(f)
         for court_bundle in courts_bundles_provincial:
             for court in court_bundle:
-                name = court['name']
-                print(name)
-                json_format['params']['queryCondition'][0]['value'] = name
-                json_format["params"]['ciphertext'] = CipherText()
-                b64_data = base64.b64encode(json.dumps(json_format).encode('utf-8'))
-                resp = self.s.post('http://wenshuapp.court.gov.cn/appinterface/rest.q4w', data={'request':b64_data})
-                retjson = resp.json()
-                text = decode_json(retjson)
-                docids = json.loads(text)['relWenshu']
-                print(len(docids))
+                for date in date_handler2(2020, 1, 1, 2020, 7, 1):
+                    name = court['name']
+                    print(name, date)
+                    post_json = self.get_search_json(name, date, self.json_format)
+                    b64_data = base64.b64encode(str(post_json).encode('utf-8'))
+                    retjson = self.search(b64_data)
+                    docids = json.loads(decode_json(retjson))['relWenshu']
+                    print(len(docids))
+
+    def search(self, b64data):
+        resp = requests.post('http://wenshuapp.court.gov.cn/appinterface/rest.q4w', data={'request': b64data})
+        if resp.status_code == 200:
+            try:
+                return resp.json()
+            except Exception as e:
+                print(str(e))
+                time.sleep(5)
+                return self.search(b64data)
+
+    @staticmethod
+    def get_search_json(name: str, date: str, json_format: json):
+        json_format['params']['queryCondition'][0]['value'] = name
+        json_format['params']['queryCondition'][1]['value'] = f'{date} TO {date}'
+        json_format["params"]['ciphertext'] = CipherText()
+        return json_format
+
+    @staticmethod
+    def load_json_format():
+        with open('./search_list_params.json', 'r', encoding='utf-8') as f:
+            json_format = json.load(f)
+        return json_format
 
 
 if __name__ == '__main__':
